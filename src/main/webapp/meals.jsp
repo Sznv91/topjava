@@ -9,11 +9,8 @@
     </title>
 </head>
 <body>
-
-<%
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm");
-    request.setAttribute("formatter", formatter);
-%>
+<a href="index.html">HOME</a><br><br>
+<input type="button" value="New Meal" onClick='location.href="meals?action=new"'>
 
 <table border="1">
     <tr>
@@ -23,15 +20,17 @@
         <th></th>
         <th></th>
     </tr>
+    <jsp:useBean id="formatter" scope="request" type="java.time.format.DateTimeFormatter"/>
     <jsp:useBean id="mealToList" scope="request" type="java.util.List"/>
     <c:forEach var="meal" items="${mealToList}">
+
         <jsp:useBean id="meal" type="ru.javawebinar.topjava.model.MealTo"/>
         <tr bgcolor="${meal.excess ? "red" : "green"}">
             <td>${formatter.format(meal.dateTime)}</td>
             <td>${meal.description}</td>
             <td>${meal.calories}</td>
-            <td>Delete</td>
-            <td>Update</td>
+            <td><a href="meals?action=delete&id=${meal.id}">Delete</a></td>
+            <td><a href="meals?action=update&id=${meal.id}">Update</a></td>
         </tr>
     </c:forEach>
 </table>
