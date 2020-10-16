@@ -4,10 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.core.io.Resource;
 import ru.javawebinar.topjava.model.Meal;
-import ru.javawebinar.topjava.repository.MealRepository;
-import ru.javawebinar.topjava.repository.inmemory.InMemoryMealRepository;
 import ru.javawebinar.topjava.service.MealService;
 import ru.javawebinar.topjava.util.MealsUtil;
 
@@ -17,6 +14,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
@@ -31,7 +29,7 @@ public class MealServlet extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        try(ConfigurableApplicationContext ctx = new ClassPathXmlApplicationContext("spring/spring-app.xml")){
+        try (ConfigurableApplicationContext ctx = new ClassPathXmlApplicationContext("spring/spring-app.xml")) {
             service = ctx.getBean(MealService.class);
         }
     }
@@ -40,15 +38,25 @@ public class MealServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         String id = request.getParameter("id");
+        String action = request.getParameter("action");
+        if ("filter".equals(action)) {
+            LocalDate startDate = LocalDate.parse(request.getParameter("startDate"));
+            LocalDate endDate = LocalDate.parse(request.getParameter("endDate"));
+            request.setAttribute("meals",
+                    MealsUtil.getTos(service.getAll(userID, startDate, endDate), caloriesPerDay));
+            request.getRequestDispatcher("/meals.jsp").forward(request, response);
 
-        Meal meal = new Meal(id.isEmpty() ? null : Integer.valueOf(id), userID,
-                LocalDateTime.parse(request.getParameter("dateTime")),
-                request.getParameter("description"),
-                Integer.parseInt(request.getParameter("calories")));
+        } else {
+            Meal meal = new Meal(id.isEmpty() ? null : Integer.valueOf(id), userID,
+                    LocalDateTime.parse(request.getParameter("dateTime")),
+                    request.getParameter("description"),
+                    Integer.parseInt(request.getParameter("calories")));
 
-        log.info(meal.isNew() ? "Create {}" : "Update {}", meal);
-        service.create(meal);
-        response.sendRedirect("meals");
+            log.info(meal.isNew() ? "Create {}" : "Update {}", meal);
+            service.create(meal);
+            response.sendRedirect("meals");
+        }
+
     }
 
     @Override
@@ -75,7 +83,7 @@ public class MealServlet extends HttpServlet {
             default:
                 log.info("getAll");
                 request.setAttribute("meals",
-                        MealsUtil.getTos(service.getAll(userID), caloriesPerDay));
+                        MealsUtil.getTos(service.getAll(userID, LocalDate.MIN, LocalDate.MAX), caloriesPerDay));
                 request.getRequestDispatcher("/meals.jsp").forward(request, response);
                 break;
         }
