@@ -36,8 +36,14 @@ public class JdbcMealRepository implements MealRepository {
 
     @Override
     public Meal save(Meal meal, int userId) {
-        jdbcTemplate.update("INSERT INTO meals(user_id, description, datetime, calories) " +
-                "VALUES (?,?,?,?)", userId, meal.getDescription(), meal.getDateTime(), meal.getCalories());
+        if (meal.isNew()) {
+            jdbcTemplate.update("INSERT INTO meals(user_id, description, datetime, calories) " +
+                    "VALUES (?,?,?,?)", userId, meal.getDescription(), meal.getDateTime(), meal.getCalories());
+        } else {
+            jdbcTemplate.update("UPDATE meals SET user_id =?, description =?, datetime = ?, calories = ? WHERE id = ?"
+                    , userId, meal.getDescription(), meal.getDateTime(), meal.getCalories(), meal.getId());
+        }
+
         int seq = Integer.parseInt(
                 jdbcTemplate.query("SELECT * FROM global_seq", (rse, rowNum) -> rse.getString("last_value")).get(0));
         return get(seq, userId);
@@ -71,7 +77,6 @@ public class JdbcMealRepository implements MealRepository {
 
     @Override
     public List<Meal> getBetweenHalfOpen(LocalDateTime startDateTime, LocalDateTime endDateTime, int userId) {
-        List<Meal> result = jdbcTemplate.query("SELECT * FROM meals WHERE user_id=? AND datetime >= ? AND datetime < ?", new Object[]{userId, startDateTime, endDateTime}, ROW_MAPPER);
-        return null;
+        return jdbcTemplate.query("SELECT * FROM meals WHERE user_id=? AND datetime >= ? AND datetime < ?", new Object[]{userId, startDateTime, endDateTime}, ROW_MAPPER);
     }
 }

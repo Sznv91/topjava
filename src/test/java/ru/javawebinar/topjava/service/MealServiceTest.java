@@ -13,6 +13,8 @@ import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.util.exception.NotFoundException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -58,10 +60,31 @@ public class MealServiceTest {
 
     @Test
     public void getAll() {
+        List<Meal> expect = new ArrayList<>(Arrays.asList(
+                new Meal(100002, LocalDateTime.of(2015, 06, 01, 14, 00), "Админ ланч", 510),
+                new Meal(100003, LocalDateTime.of(2015, 06, 01, 21, 00), "Админ ужин", 1500)
+        ));
+
+
+        List<Meal> actual = service.getAll(100000);
+        assertEquals(2, actual.size());
+        assertEquals(expect.get(0).getId(), actual.get(0).getId());
+        assertEquals(expect.get(0).getCalories(), actual.get(0).getCalories());
+        assertEquals(expect.get(0).getDescription(), actual.get(0).getDescription());
+        assertEquals(expect.get(1).getId(), actual.get(1).getId());
+
+
     }
 
     @Test
     public void update() {
+        Meal expect = new Meal(100002, LocalDateTime.of(2020, 10, 06, 19, 30), "Update Meal", 1488);
+        service.update(expect, 100000);
+        Meal actual = service.get(100002, 100000);
+        assertEquals(expect.getId(), actual.getId());
+        assertEquals(expect.getDateTime().toString(), actual.getDateTime().toString());
+        assertEquals(expect.getDescription(), actual.getDescription());
+        assertEquals(expect.getCalories(), actual.getCalories());
     }
 
     @Test
