@@ -28,6 +28,7 @@ public class MealService {
 
     public void delete(int id, int userId) {
         checkNotFoundWithId(repository.delete(id, userId), id);
+        //repository.delete(id,userId);
     }
 
     public List<Meal> getBetweenInclusive(@Nullable LocalDate startDate, @Nullable LocalDate endDate, int userId) {

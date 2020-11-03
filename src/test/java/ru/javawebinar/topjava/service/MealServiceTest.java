@@ -1,5 +1,6 @@
 package ru.javawebinar.topjava.service;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,13 +9,15 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit4.SpringRunner;
+import ru.javawebinar.topjava.TestMatcher;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.util.exception.NotFoundException;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.List;
 
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.*;
 import static ru.javawebinar.topjava.MealTestData.*;
 import static ru.javawebinar.topjava.UserTestData.ADMIN_ID;
 import static ru.javawebinar.topjava.UserTestData.USER_ID;
@@ -52,8 +55,11 @@ public class MealServiceTest {
         int newId = created.id();
         Meal newMeal = getNew();
         newMeal.setId(newId);
-        MEAL_MATCHER.assertMatch(created, newMeal);
-        MEAL_MATCHER.assertMatch(service.get(newId, USER_ID), newMeal);
+        ///MEAL_MATCHER.assertMatch(created, newMeal);
+        //MEAL_MATCHER.assertMatch(service.get(newId, USER_ID), newMeal);
+        assertTrue(mealMatcher(getNew(), created));
+        assertEquals(java.util.Optional.of(USER_ID).get(), created.getUser().getId());
+
     }
 
     @Test
@@ -66,7 +72,9 @@ public class MealServiceTest {
     @Test
     public void get() throws Exception {
         Meal actual = service.get(ADMIN_MEAL_ID, ADMIN_ID);
-        MEAL_MATCHER.assertMatch(actual, admin_meal1);
+        assertEquals(admin_meal1.getId(), actual.getId());
+        assertTrue(mealMatcher(admin_meal1, actual));
+        assertEquals(java.util.Optional.of(ADMIN_ID).get(), actual.getUser().getId());
     }
 
     @Test
@@ -83,7 +91,13 @@ public class MealServiceTest {
     public void update() throws Exception {
         Meal updated = getUpdated();
         service.update(updated, USER_ID);
-        MEAL_MATCHER.assertMatch(service.get(MEAL1_ID, USER_ID), getUpdated());
+        Meal actual = service.get(updated.getId(), USER_ID);
+
+        assertEquals(updated.getId(), actual.getId());
+        assertTrue(mealMatcher(updated, actual));
+        assertEquals(java.util.Optional.of(USER_ID).get(), updated.getUser().getId());
+
+//        MEAL_MATCHER.assertMatch(service.get(MEAL1_ID, USER_ID), getUpdated());
     }
 
     @Test
@@ -93,7 +107,11 @@ public class MealServiceTest {
 
     @Test
     public void getAll() throws Exception {
-        MEAL_MATCHER.assertMatch(service.getAll(USER_ID), meals);
+        List<Meal> actual = service.getAll(USER_ID);
+        for (int i = 0; i < actual.size(); i++){
+          assertTrue(mealMatcher(actual.get(i), meals.get(i)));
+        }
+//        MEAL_MATCHER.assertMatch(service.getAll(USER_ID), meals);
     }
 
     @Test
@@ -107,5 +125,23 @@ public class MealServiceTest {
     @Test
     public void getBetweenWithNullDates() throws Exception {
         MEAL_MATCHER.assertMatch(service.getBetweenInclusive(null, null, USER_ID), meals);
+    }
+
+    private boolean mealMatcher(Meal expected, Meal actual) {
+        boolean result = false;
+        if (expected.getDescription().equals(actual.getDescription())) {
+            result = true;
+        }
+        if (result == true && expected.getDateTime().toString().equals(actual.getDateTime().toString())) {
+
+        } else {
+            return false;
+        }
+        if (result == true && expected.getCalories() == actual.getCalories()) {
+
+        } else {
+            return false;
+        }
+        return result;
     }
 }
